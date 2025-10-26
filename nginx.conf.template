@@ -1,0 +1,35 @@
+events {
+    worker_connections 1024;
+}
+
+http {
+  upstream app_pool {
+    server ${BLUE_HOST}:${PORT} max_fails=2 fail_timeout=3s;
+    server ${GREEN_HOST}:${PORT} backup;
+  }
+
+  server {
+    listen 80;
+    
+    location / {
+      proxy_pass http://app_pool;
+
+      # Custom Headers
+      proxy_pass_header X-App-Pool;
+      proxy_pass_header X-Release-Id;
+
+      # Failover
+      proxy_next_upstream error timeout http_500 http_502 http_503;
+      proxy_connect_timeout 2s;
+      proxy_read_timeout 2s;
+    }
+
+    location /healthz {
+      proxy_pass http://app_pool/healthz;
+    }
+
+    location /version {
+      proxy_pass http://app_pool/version;
+    }
+  }
+}
