@@ -1,5 +1,5 @@
 services:
-  app-blue:
+  app_blue:
     image: ${BLUE_IMAGE}
     container_name: blue-service
     ports:
@@ -7,10 +7,11 @@ services:
     environment:
       - RELEASE_ID=${RELEASE_ID_BLUE}
       - PORT=${PORT}
+      - APP_POOL=${APP_POOL}
     networks:
       - blue-green-release-net
 
-  app-green:
+  app_green:
     image: ${GREEN_IMAGE}
     container_name: green-service
     ports:
@@ -18,11 +19,12 @@ services:
     environment:
       - RELEASE_ID=${RELEASE_ID_GREEN}
       - PORT=${PORT}
+      - APP_POOL=${APP_POOL}
     networks:
       - blue-green-release-net
 
 
-  proxy:
+  nginx:
     image: nginx:stable-alpine
     container_name: load-balancer
     restart: always
@@ -33,12 +35,12 @@ services:
     volumes:
       - ./nginx.conf.template:/etc/nginx/templates/nginx.conf.template:ro
     depends_on:
-      - app-blue
-      - app-green
+      - app_blue
+      - app_green
     environment:
       - PORT=${PORT}
-      - BLUE_HOST=app-blue
-      - GREEN_HOST=app-green
+      - BLUE_HOST=app_blue
+      - GREEN_HOST=app_green
     command:  >
       /bin/sh -c "
         envsubst < /etc/nginx/templates/nginx.conf.template > /etc/nginx/nginx.conf &&
